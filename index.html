@@ -1,0 +1,432 @@
+<title>Automation Audit — client diagnostic</title>
+<style>
+  :root{
+    --paper:#f4f6f4; --surface:#ffffff; --ink:#151f1c; --muted:#5b6a64;
+    --hair:#dbe2de; --accent:#0d7a6f; --accent-soft:#0d7a6f1a;
+    --stake:#b4530a; --good:#0d7a6f; --keep:#8b9a93; --keep-bg:#eef1ef;
+    --shadow:0 1px 2px #16211e0a, 0 8px 24px #16211e0f;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans JP",sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0d1512; --surface:#131d19; --ink:#e7efeb; --muted:#93a49d;
+      --hair:#243029; --accent:#2dd4bf; --accent-soft:#2dd4bf1f;
+      --stake:#f59e0b; --good:#2dd4bf; --keep:#7f8f88; --keep-bg:#182420;
+      --shadow:0 1px 2px #0006, 0 10px 30px #0007;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f4f6f4; --surface:#ffffff; --ink:#151f1c; --muted:#5b6a64;
+    --hair:#dbe2de; --accent:#0d7a6f; --accent-soft:#0d7a6f1a;
+    --stake:#b4530a; --good:#0d7a6f; --keep:#8b9a93; --keep-bg:#eef1ef;
+    --shadow:0 1px 2px #16211e0a, 0 8px 24px #16211e0f;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0d1512; --surface:#131d19; --ink:#e7efeb; --muted:#93a49d;
+    --hair:#243029; --accent:#2dd4bf; --accent-soft:#2dd4bf1f;
+    --stake:#f59e0b; --good:#2dd4bf; --keep:#7f8f88; --keep-bg:#182420;
+    --shadow:0 1px 2px #0006, 0 10px 30px #0007;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:clamp(20px,4vw,48px)}
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:8px}
+  .brand{display:flex;flex-direction:column;gap:4px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(24px,4vw,34px);line-height:1.1;margin:2px 0 0;font-weight:680;letter-spacing:-.02em;text-wrap:balance}
+  .sub{color:var(--muted);font-size:15px;max-width:52ch}
+  .lang{display:flex;gap:2px;background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:3px;box-shadow:var(--shadow)}
+  .lang button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;border:0;background:transparent;color:var(--muted);
+    padding:6px 11px;border-radius:7px;cursor:pointer;text-transform:uppercase}
+  .lang button[aria-pressed="true"]{background:var(--accent);color:#fff}
+  :root[data-theme="dark"] .lang button[aria-pressed="true"]{color:#04110e}
+  @media (prefers-color-scheme:dark){.lang button[aria-pressed="true"]{color:#04110e}}
+
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:clamp(18px,3vw,26px);box-shadow:var(--shadow);margin-top:22px}
+  .card h2{font-size:15px;letter-spacing:-.01em;color:var(--ink);margin:0 0 4px;font-weight:650;display:flex;align-items:center;gap:10px}
+  .step{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;
+    background:var(--accent);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;flex:none}
+  :root[data-theme="dark"] .step{color:#04110e}
+  @media (prefers-color-scheme:dark){.step{color:#04110e}}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 16px;max-width:64ch}
+  .hint{color:var(--muted);font-size:12px;font-weight:400;line-height:1.35}
+  label{gap:3px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:560px){.grid2{grid-template-columns:1fr}}
+  label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+  input,select{font:inherit;font-size:15px;color:var(--ink);background:var(--paper);border:1px solid var(--hair);
+    border-radius:9px;padding:9px 11px;width:100%}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  input[type=number]{font-variant-numeric:tabular-nums}
+
+  .task{border:1px solid var(--hair);border-radius:12px;padding:16px;margin-top:14px;background:var(--paper)}
+  .task .row1{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end}
+  @media (max-width:560px){.task .row1{grid-template-columns:1fr 1fr}}
+  .qcap{font-size:13px;color:var(--ink);font-weight:600;margin-top:14px}
+  .task .q{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px}
+  @media (max-width:560px){.task .q{grid-template-columns:1fr}}
+  .del{border:1px solid var(--hair);background:transparent;color:var(--muted);border-radius:9px;padding:9px 12px;cursor:pointer;font-size:16px;line-height:1}
+  .del:hover{color:var(--stake);border-color:var(--stake)}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+  button.ghost,button.run{font:inherit;font-weight:600;border-radius:10px;padding:11px 18px;cursor:pointer;font-size:15px}
+  button.ghost{background:transparent;border:1px solid var(--hair);color:var(--ink)}
+  button.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  button.run{background:var(--accent);border:1px solid var(--accent);color:#fff}
+  :root[data-theme="dark"] button.run{color:#04110e}
+  @media (prefers-color-scheme:dark){button.run{color:#04110e}}
+  button.run:hover{filter:brightness(1.05)}
+
+  /* report */
+  #report{margin-top:26px;display:none}
+  #report.show{display:block;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){#report.show{animation:none}}
+  .hero-num{display:flex;flex-direction:column;gap:6px;border-left:3px solid var(--accent);padding-left:18px;margin-bottom:8px}
+  .hero-num .big{font-size:clamp(30px,6vw,46px);font-weight:720;letter-spacing:-.03em;color:var(--stake);font-variant-numeric:tabular-nums;line-height:1}
+  .hero-num .cap{color:var(--muted);font-size:15px;max-width:56ch}
+  .method{color:var(--muted);font-size:14px;margin:14px 0 0;max-width:64ch}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+  .scroll{overflow-x:auto}
+  th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--hair)}
+  td{padding:10px;border-bottom:1px solid var(--hair);vertical-align:top}
+  td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .stake{color:var(--stake);font-weight:600}
+  .rank{font-family:var(--mono);color:var(--accent);font-weight:700}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .pill.go{background:var(--accent-soft);color:var(--good)}
+  .pill.keep{background:var(--keep-bg);color:var(--keep)}
+  .minbar{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .keeplist{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:6px}
+  .keeplist li{display:flex;gap:9px;align-items:baseline;font-size:14px;color:var(--ink)}
+  .keeplist li::before{content:"—";color:var(--keep)}
+  .pagefoot{margin-top:28px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--hair);padding-top:16px}
+  .cta-link{color:var(--accent);font-weight:600;font-size:14px;text-decoration:none;width:fit-content}
+  .cta-link:hover{text-decoration:underline}
+  .cta-link::after{content:"";}
+  .foot{color:var(--muted);font-size:12px;font-family:var(--mono);letter-spacing:.03em}
+  h3.rep{font-size:14px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:24px 0 4px;font-weight:600}
+  .rep-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+  .prep-by{font-weight:600;font-size:15px;color:var(--ink)}
+  .pdf{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--hair);background:transparent;color:var(--accent);border-radius:8px;padding:7px 13px;cursor:pointer;white-space:nowrap}
+  .pdf:hover{border-color:var(--accent)}
+  @media print{
+    body{background:#fff;color:#000}
+    .wrap>header.top, .wrap>section.card:not(#report .card), #report>.card>.rep-head .pdf, .pagefoot, .lang{display:none !important}
+    #report{margin:0}
+    #report .card{border:0;box-shadow:none;padding:0}
+    .stake{color:#b4530a !important}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="kicker" id="k-kicker">Automation Audit</span>
+      <h1 id="k-title">Find the hours hiding in your team's week</h1>
+      <p class="sub" id="k-sub">List the tasks you do over and over. Answer three quick questions about each. You'll see which are worth handing to a computer — and what they cost you every year.</p>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-lang="en" aria-pressed="true">EN</button>
+      <button data-lang="ja" aria-pressed="false">日本語</button>
+      <button data-lang="es" aria-pressed="false">ES</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2 id="k-context"><span class="step">1</span> <span id="k-context-t">What an hour of your time is worth</span></h2>
+    <p class="lead" id="k-context-lead">We use these two numbers to turn saved hours into a dollar figure.</p>
+    <div class="grid2">
+      <label id="l-rev">Monthly revenue<span class="hint" id="h-rev">Roughly what you bill in a month</span><input type="number" id="rev" value="14200" min="0" step="100"></label>
+      <label id="l-hrs">Hours you actually work per month<span class="hint" id="h-hrs">Everything, including admin — not just billable hours</span><input type="number" id="hrs" value="168" min="1" step="1"></label>
+    </div>
+    <label id="l-prep" style="margin-top:14px">Prepared by (you or your business)<span class="hint" id="h-prep">Shown on the report you send your client</span><input type="text" id="prep" placeholder="Your name / studio"></label>
+  </section>
+
+  <section class="card">
+    <h2 id="k-tasks"><span class="step">2</span> <span id="k-tasks-t">The tasks you repeat</span></h2>
+    <p class="lead" id="k-tasks-lead">Add each recurring task. For every one, the three questions decide whether a computer can reliably take it over.</p>
+    <div id="tasks"></div>
+    <div class="actions">
+      <button class="ghost" id="add">+ <span id="k-add">Add a task</span></button>
+      <button class="run" id="run"><span id="k-run">See the result</span></button>
+    </div>
+  </section>
+
+  <section id="report" aria-live="polite"></section>
+  <footer class="pagefoot">
+    <a class="cta-link" id="k-cta" href="https://nekoaineko.gumroad.com/l/qlmozf?utm_source=audit_tool&amp;utm_medium=free_tool&amp;utm_campaign=diagnostic" target="_blank" rel="noopener">The method behind this audit → the Freelancer AI Automation Playbook</a>
+    <p class="foot" id="k-foot">Numbers are computed from your inputs — nothing is invented. Prototype.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const WEEKS=46;
+// ---- i18n: UI + report, all in one place. Add a block = add a market. ----
+const T={
+  en:{
+    kicker:"Automation Audit",
+    title:"Find the hours hiding in your team's week",
+    sub:"List the tasks you do over and over. Answer three quick questions about each. You'll see which are worth handing to a computer — and what they cost you every year.",
+    contextT:"What an hour of your time is worth", contextLead:"We use these two numbers to turn saved hours into a dollar figure.",
+    rev:"Monthly revenue", hRev:"Roughly what you bill in a month",
+    hrs:"Hours you actually work per month", hHrs:"Everything, including admin — not just billable hours",
+    tasksT:"The tasks you repeat", tasksLead:"Add each recurring task. For every one, the three questions decide whether a computer can reliably take it over.",
+    add:"Add a task", run:"See the result",
+    preparedBy:"Prepared by (you or your business)", preparedByHint:"Shown on the report you send your client", savePdf:"Save as PDF",
+    name:"What is the task?", times:"Times a week", min:"Minutes each time", remove:"Remove",
+    other:"Other…", otherPh:"Type the task name",
+    qcap:"Can a computer take this over? Three questions:",
+    qA:"1. Can a computer get the info it needs?", qB:"2. Is it safe if it's sometimes wrong?", qC:"3. Same routine every time?",
+    aA:["Yes — it's in an app, sheet, or file","Partly — spread across email, PDFs, calls","No — it's in my head or verbal"],
+    aB:["Safe — I review it, a mistake is a quick fix","Some risk — awkward but fixable","Risky — wrong money/info to a client"],
+    aC:["Yes — same routine every time","Mostly — a few calls, but rule-based","No — every one is a new decision"],
+    theNumber:"What you could get back",
+    numberBody:(h,y,r)=>`About <b>${h} hours a week</b> go to repetitive admin a computer could take over — that's <span class="stake">${y} a year</span> of your time, valued at your real rate of ${r}/hr.`,
+    method:"Each task is judged on three things: can a computer reach the information, is it safe if it's occasionally wrong, and is it the same every time. A task is only worth automating if all three hold — so it's ranked by its weakest answer.",
+    automateFirst:"Worth automating — start here", cTask:"Task", cRec:"Time back", cStake:"Costs you / yr",
+    cScore:"Fit", cVerdict:"", why:m=>`info reachable · safe if wrong · same each time (${m}/5)`,
+    none:"None of these passed — honestly, automation isn't your bottleneck right now. That's worth knowing before you spend a weekend building.",
+    keepTitle:"Keep doing by hand",
+    keepBody:"These look automatable but fail one of the three tests — a mistake would be costly, or they happen too rarely to be worth building.",
+    means:(n,y)=>`Those ${n} tasks are where the <span class="stake">${y} a year</span> is. Turning them into a system — not a one-off — is exactly the work worth scoping next.`,
+    full:"Every task, scored", go:"automate", keep:"by hand", hpw:"h/wk",
+    cta:"The method behind this audit → the Freelancer AI Automation Playbook",
+    foot:"Every number here is calculated from what you entered — nothing is invented. Prototype."
+  },
+  ja:{
+    kicker:"自動化診断",
+    title:"一週間に隠れている時間を見つける",
+    sub:"繰り返しやっているタスクを並べ、それぞれ3つの質問に答えるだけ。どれをコンピュータに任せる価値があるか、そして年間いくら損しているかが分かります。",
+    contextT:"あなたの1時間の価値", contextLead:"この2つの数字で、削減した時間を金額に換算します。",
+    rev:"月の売上", hRev:"月にだいたい請求している額",
+    hrs:"実際に働く時間 / 月", hHrs:"事務も全部含めて。請求できる時間だけではありません",
+    tasksT:"繰り返しているタスク", tasksLead:"定型タスクを追加してください。各タスクの3つの質問が「コンピュータに確実に任せられるか」を決めます。",
+    add:"タスクを追加", run:"結果を見る",
+    preparedBy:"作成者（あなた/屋号）", preparedByHint:"クライアントに送るレポートに表示されます", savePdf:"PDFで保存",
+    name:"どんなタスク？", times:"週に何回？", min:"1回あたり何分？", remove:"削除",
+    other:"その他…", otherPh:"タスク名を入力",
+    qcap:"コンピュータに任せられる？ 3つの質問:",
+    qA:"1. 必要な情報にコンピュータが届く？", qB:"2. たまに間違っても安全？", qC:"3. 毎回同じ手順？",
+    aA:["はい — アプリ・表・ファイルにある","一部 — メール・PDF・電話に散在","いいえ — 頭の中か口頭だけ"],
+    aB:["安全 — 自分で確認、間違ってもすぐ直る","多少リスク — 気まずいが直せる","危険 — 客に誤った金額/情報が渡る"],
+    aC:["はい — 毎回同じ手順","ほぼ — 数回判断あるがルール化可","いいえ — 毎回が新しい判断"],
+    theNumber:"取り戻せる分",
+    numberBody:(h,y,r)=>`毎週およそ <b>${h} 時間</b>が、コンピュータに任せられる繰り返し事務に消えています。あなたの実レート ${r}/時 で換算すると、<span class="stake">年 ${y}</span> 分の時間です。`,
+    method:"各タスクを3点で判定します — コンピュータが情報に届くか、たまに間違っても安全か、毎回同じか。3つ全部が成り立つ時だけ自動化する価値があるので、一番弱い答えで並べています。",
+    automateFirst:"自動化する価値あり — ここから", cTask:"タスク", cRec:"取り戻す時間", cStake:"年間の損失",
+    cScore:"適性", cVerdict:"", why:m=>`情報に届く・間違っても安全・毎回同じ（${m}/5）`,
+    none:"どれも通過しませんでした。正直、今の律速は自動化ではありません。週末を溶かす前に知る価値があります。",
+    keepTitle:"手でやり続ける",
+    keepBody:"自動化『できそう』に見えて、3つのどれかで落ちます。間違いが高コストか、頻度が低く作る価値がないためです。",
+    means:(n,y)=>`その ${n} タスクに <span class="stake">年 ${y}</span> が眠っています。単発でなくシステムに変えることが、次に取り組む価値のある仕事です。`,
+    full:"全タスクの採点", go:"自動化", keep:"手でやる", hpw:"時間/週",
+    cta:"この診断の手法 → Freelancer AI Automation Playbook",
+    foot:"ここの数字は全て入力から計算しています。捏造はありません。試作版。"
+  },
+  es:{
+    kicker:"Auditoría de Automatización",
+    title:"Encuentra las horas ocultas en tu semana",
+    sub:"Enumera las tareas que haces una y otra vez. Responde tres preguntas rápidas sobre cada una. Verás cuáles vale la pena dar a una computadora — y cuánto te cuestan al año.",
+    contextT:"Cuánto vale una hora de tu tiempo", contextLead:"Usamos estos dos números para convertir horas ahorradas en dinero.",
+    rev:"Ingresos mensuales", hRev:"Aproximadamente lo que facturas al mes",
+    hrs:"Horas que realmente trabajas al mes", hHrs:"Todo, incluida la admin — no solo horas facturables",
+    tasksT:"Las tareas que repites", tasksLead:"Añade cada tarea recurrente. Las tres preguntas deciden si una computadora puede asumirla de forma fiable.",
+    add:"Añadir tarea", run:"Ver el resultado",
+    preparedBy:"Preparado por (tú o tu negocio)", preparedByHint:"Aparece en el informe que envías a tu cliente", savePdf:"Guardar como PDF",
+    name:"¿Qué tarea es?", times:"Veces por semana", min:"Minutos cada vez", remove:"Quitar",
+    other:"Otro…", otherPh:"Escribe la tarea",
+    qcap:"¿Puede asumirla una computadora? Tres preguntas:",
+    qA:"1. ¿Puede acceder a la info que necesita?", qB:"2. ¿Es seguro si a veces se equivoca?", qC:"3. ¿La misma rutina siempre?",
+    aA:["Sí — está en una app, hoja o archivo","En parte — email, PDFs, llamadas","No — en mi cabeza o verbal"],
+    aB:["Seguro — lo reviso, un error se corrige rápido","Algo de riesgo — incómodo pero corregible","Riesgo — dinero/info erróneo a un cliente"],
+    aC:["Sí — la misma rutina siempre","Casi — algunas decisiones, pero con reglas","No — cada una es una decisión nueva"],
+    theNumber:"Lo que podrías recuperar",
+    numberBody:(h,y,r)=>`Unas <b>${h} horas a la semana</b> se van en admin repetitiva que una computadora podría asumir — eso es <span class="stake">${y} al año</span> de tu tiempo, a tu tarifa real de ${r}/h.`,
+    method:"Cada tarea se juzga por tres cosas: si una computadora puede acceder a la información, si es seguro cuando se equivoca, y si es igual cada vez. Solo vale la pena automatizar si las tres se cumplen — por eso se ordena por su respuesta más débil.",
+    automateFirst:"Vale la pena automatizar — empieza aquí", cTask:"Tarea", cRec:"Tiempo recuperado", cStake:"Te cuesta / año",
+    cScore:"Aptitud", cVerdict:"", why:m=>`info accesible · seguro si falla · igual cada vez (${m}/5)`,
+    none:"Ninguna pasó — honestamente, la automatización no es tu cuello de botella ahora. Vale saberlo antes de invertir un fin de semana.",
+    keepTitle:"Seguir a mano",
+    keepBody:"Parecen automatizables pero fallan una de las tres pruebas — un error sería costoso, o pasan muy poco para justificar construirlo.",
+    means:(n,y)=>`Esas ${n} tareas es donde están los <span class="stake">${y} al año</span>. Convertirlas en un sistema — no algo puntual — es justo el trabajo que vale definir a continuación.`,
+    full:"Cada tarea, puntuada", go:"automatizar", keep:"a mano", hpw:"h/sem",
+    cta:"El método de esta auditoría → Freelancer AI Automation Playbook",
+    foot:"Cada número aquí se calcula de lo que ingresaste — nada es inventado. Prototipo."
+  }
+};
+let lang="en";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const fmt=n=>"$"+Math.round(n).toLocaleString("en-US");
+
+// よくある定型タスク。def=[A,B,C] の妥当な初期値(選ぶと自動で入る・調整可)。
+const CATALOG=[
+  {id:"status",  def:[5,3,5], en:"Weekly status updates",   ja:"進捗・状況の報告",       es:"Actualizaciones de estado"},
+  {id:"invoice", def:[5,1,5], en:"Invoicing",               ja:"請求書の作成",           es:"Facturación"},
+  {id:"proposal",def:[3,3,3], en:"Proposal drafts",         ja:"提案書の作成",           es:"Redacción de propuestas"},
+  {id:"callnote",def:[3,5,5], en:"Call / meeting notes",    ja:"打ち合わせメモ",         es:"Notas de reuniones"},
+  {id:"onboard", def:[2,3,2], en:"Client onboarding",       ja:"クライアントの導入対応", es:"Onboarding de clientes"},
+  {id:"schedule",def:[3,4,4], en:"Scheduling / calendar",   ja:"日程調整",               es:"Programación / calendario"},
+  {id:"email",   def:[3,4,2], en:"Email replies / triage",  ja:"メールの返信・仕分け",   es:"Respuestas / triaje de email"},
+  {id:"report",  def:[4,3,4], en:"Client reports",          ja:"レポートの作成",         es:"Informes para clientes"},
+  {id:"social",  def:[4,5,3], en:"Social media posts",      ja:"SNS投稿",                es:"Publicaciones en redes"},
+  {id:"contract",def:[3,1,2], en:"Contracts / agreements",  ja:"契約書の作成",           es:"Contratos / acuerdos"},
+  {id:"scope",   def:[3,3,3], en:"Scope-change replies",    ja:"追加要望への返信",       es:"Respuestas a cambios"},
+  {id:"books",   def:[4,2,4], en:"Expenses / bookkeeping",  ja:"経費・記帳",             es:"Gastos / contabilidad"},
+];
+const CAT=Object.fromEntries(CATALOG.map(c=>[c.id,c]));
+const SEED=[
+  {id:"status",  t:11,m:23}, {id:"callnote",t:6,m:18},
+  {id:"proposal",t:3, m:45}, {id:"invoice", t:2,m:24},
+];
+function freqToD(t){return t>=5?5:t>=2?4:t>=0.9?3:t>=0.25?2:1;}
+function taskDefaults(d){ // A/B/C: 明示値 > カタログ既定 > 中庸
+  const base=(d.id&&CAT[d.id])?CAT[d.id].def:[3,3,3];
+  return {A:d.A??base[0], B:d.B??base[1], C:d.C??base[2]};
+}
+
+function taskEl(d){
+  const s=T[lang];
+  const abc=taskDefaults(d);
+  const isOther=d.id==="other"||(d.id&&!CAT[d.id]);
+  const el=document.createElement("div");el.className="task";
+  const opt=(arr,val)=>arr.map((label,i)=>{const v=[5,3,1][i];return `<option value="${v}" ${v===val?"selected":""}>${label}</option>`;}).join("");
+  const nameOpts=CATALOG.map(c=>`<option value="${c.id}" ${c.id===d.id?"selected":""}>${c[lang]}</option>`).join("")
+    +`<option value="other" ${isOther?"selected":""}>${s.other}</option>`;
+  el.innerHTML=`
+    <div class="row1">
+      <label class="l-name">${s.name}
+        <select class="i-sel">${nameOpts}</select>
+        <input type="text" class="i-custom" placeholder="${s.otherPh}" value="${isOther?(d.customName||""):""}" style="${isOther?"":"display:none"};margin-top:6px">
+      </label>
+      <label class="l-times">${s.times}<input type="number" class="i-times" value="${d.t}" min="0" step="0.5"></label>
+      <label class="l-min">${s.min}<input type="number" class="i-min" value="${d.m}" min="1" step="1"></label>
+      <button class="del" title="${s.remove}" aria-label="${s.remove}">×</button>
+    </div>
+    <div class="qcap">${s.qcap}</div>
+    <div class="q">
+      <label class="l-qA">${s.qA}<select class="i-A">${opt(s.aA,abc.A)}</select></label>
+      <label class="l-qB">${s.qB}<select class="i-B">${opt(s.aB,abc.B)}</select></label>
+      <label class="l-qC">${s.qC}<select class="i-C">${opt(s.aC,abc.C)}</select></label>
+    </div>`;
+  const sel=el.querySelector(".i-sel"), custom=el.querySelector(".i-custom");
+  sel.onchange=()=>{
+    const other=sel.value==="other";
+    custom.style.display=other?"":"none";
+    if(!other&&CAT[sel.value]){
+      const dd=CAT[sel.value].def;
+      el.querySelector(".i-A").value=dd[0]; el.querySelector(".i-B").value=dd[1]; el.querySelector(".i-C").value=dd[2];
+    }
+  };
+  el.querySelector(".del").onclick=()=>{el.remove();};
+  return el;
+}
+function _name(el){
+  const id=el.querySelector(".i-sel").value;
+  if(id==="other") return el.querySelector(".i-custom").value.trim()||T[lang].other;
+  return CAT[id]?CAT[id][lang]:id;
+}
+function readTasks(){
+  return $$("#tasks .task").map(el=>({
+    id:el.querySelector(".i-sel").value,
+    customName:el.querySelector(".i-custom").value,
+    name:_name(el),
+    t:+el.querySelector(".i-times").value||0,
+    m:+el.querySelector(".i-min").value||0,
+    A:+el.querySelector(".i-A").value, B:+el.querySelector(".i-B").value, C:+el.querySelector(".i-C").value,
+  }));
+}
+function currentData(){ // preserve edits across language switch
+  const els=$$("#tasks .task");
+  return els.length?readTasks().map(t=>({id:t.id,customName:t.customName,t:t.t,m:t.m,A:t.A,B:t.B,C:t.C})):SEED.slice();
+}
+function renderTasks(data){
+  const box=$("#tasks");box.innerHTML="";
+  data.forEach(d=>box.appendChild(taskEl(d)));
+}
+
+function score(){
+  const rev=+$("#rev").value||0, hrs=+$("#hrs").value||1;
+  const rate=rev/Math.max(1,hrs);
+  const rows=readTasks().map(t=>{
+    const D=freqToD(t.t), min=Math.min(t.A,t.B,t.C,D), hpw=t.t*t.m/60;
+    return {name:t.name,min,hpw,cy:hpw*rate*WEEKS,verdict:min>=3};
+  });
+  rows.sort((a,b)=>b.min-a.min||b.hpw-a.hpw);
+  const cand=rows.filter(r=>r.verdict);
+  const recH=cand.reduce((s,r)=>s+r.hpw,0);
+  return {rate,rows,top:cand.slice(0,3),recH,recY:recH*rate*WEEKS,keep:rows.filter(r=>!r.verdict)};
+}
+
+function renderReport(){
+  const s=T[lang], r=score(), R=$("#report");
+  const top=r.top.map((t,i)=>`<tr>
+      <td class="rank">${i+1}</td><td>${t.name}</td>
+      <td class="n">${t.hpw.toFixed(1)} ${s.hpw}</td>
+      <td class="n stake">${fmt(t.cy)}</td>
+      <td>${s.why(t.min)}</td></tr>`).join("");
+  const full=r.rows.map(t=>`<tr>
+      <td>${t.name}</td>
+      <td class="n"><span class="minbar">${t.min}/5</span></td>
+      <td class="n">${t.hpw.toFixed(1)}</td>
+      <td class="n">${fmt(t.cy)}</td>
+      <td><span class="pill ${t.verdict?"go":"keep"}">${t.verdict?s.go:s.keep}</span></td></tr>`).join("");
+  const keepList=r.keep.length?`<h3 class="rep">${s.keepTitle}</h3><p class="method">${s.keepBody}</p>
+     <ul class="keeplist">${r.keep.map(k=>`<li>${k.name}</li>`).join("")}</ul>`:"";
+  const first=r.top.length?
+    `<h3 class="rep">${s.automateFirst}</h3><div class="scroll"><table>
+       <thead><tr><th>#</th><th>${s.cTask}</th><th>${s.cRec}</th><th>${s.cStake}</th><th>${s.cScore}</th></tr></thead>
+       <tbody>${top}</tbody></table></div>
+       <p class="method">${s.means(r.top.length,fmt(r.recY))}</p>`
+    :`<p class="method">${s.none}</p>`;
+  const prep=($("#prep").value||"").trim();
+  const prepLine=prep?`<div class="prep-by">${prep}</div>`:"";
+  R.innerHTML=`
+    <div class="card" id="report-card">
+      <div class="rep-head">
+        ${prepLine}
+        <button class="pdf" id="savepdf">${s.savePdf}</button>
+      </div>
+      <div class="hero-num">
+        <span class="big">${fmt(r.recY)}<span style="font-size:.4em;color:var(--muted);font-weight:500">/yr</span></span>
+        <span class="cap">${s.numberBody(r.recH.toFixed(1),fmt(r.recY),fmt(r.rate))}</span>
+      </div>
+      <p class="method">${s.method}</p>
+      ${first}
+      ${keepList}
+      <h3 class="rep">${s.full}</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>${s.cTask}</th><th>${s.cScore}</th><th>${s.hpw}</th><th>${s.cStake}</th><th></th></tr></thead>
+        <tbody>${full}</tbody></table></div>
+    </div>`;
+  R.classList.add("show");
+  $("#savepdf").onclick=()=>window.print();
+}
+
+function applyLang(){
+  const s=T[lang];
+  $("#k-kicker").textContent=s.kicker; $("#k-title").textContent=s.title; $("#k-sub").textContent=s.sub;
+  $("#k-context-t").textContent=s.contextT; $("#k-context-lead").textContent=s.contextLead;
+  $("#l-rev").childNodes[0].textContent=s.rev; $("#h-rev").textContent=s.hRev;
+  $("#l-hrs").childNodes[0].textContent=s.hrs; $("#h-hrs").textContent=s.hHrs;
+  $("#k-tasks-t").textContent=s.tasksT; $("#k-tasks-lead").textContent=s.tasksLead;
+  $("#l-prep").childNodes[0].textContent=s.preparedBy; $("#h-prep").textContent=s.preparedByHint;
+  $("#k-add").textContent=s.add; $("#k-run").textContent=s.run; $("#k-foot").textContent=s.foot;
+  $("#k-cta").textContent=s.cta;
+  document.documentElement.lang=lang;
+  renderTasks(currentData());
+  if($("#report").classList.contains("show")) renderReport();
+}
+
+$$(".lang button").forEach(b=>b.onclick=()=>{
+  lang=b.dataset.lang;
+  $$(".lang button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  applyLang();
+});
+$("#add").onclick=()=>$("#tasks").appendChild(taskEl({id:"other",customName:"",t:1,m:15}));
+$("#run").onclick=renderReport;
+
+renderTasks(SEED.slice());
+</script>
