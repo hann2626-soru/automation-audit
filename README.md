@@ -14,7 +14,7 @@ A task is only worth automating if all three hold — so it's ranked by its **we
 
 ## Why it exists
 
-This is the diagnostic from **[The 8-Hours-a-Week-Back AI Automation Audit](https://nekoaineko.gumroad.com/l/dngcxw?utm_source=github&utm_medium=readme&utm_campaign=audit_tool)**, packaged as a tool. The tool finds *where* the hours are. The guide walks you through the full 90-minute audit, the scoring rubric in depth, and the three builds that recover the time.
+This is the diagnostic from **The 8-Hours-a-Week-Back AI Automation Audit**, packaged as a tool. The tool finds *where* the hours are. The guide walks you through the full 90-minute audit, the scoring rubric in depth, and the three builds that recover the time.
 
 ## Selling automation to clients?
 
@@ -23,9 +23,6 @@ The reason freelancers stay underpaid isn't skill — it's positioning. If you s
 | | |
 |---|---|
 | **Free** | This tool — send a client their number |
-| **[The 8-Hours Audit — $39](https://nekoaineko.gumroad.com/l/dngcxw?utm_source=github&utm_medium=readme&utm_campaign=audit_tool)** | The full method behind this tool |
-| **[The Freelancer AI Automation Playbook — $39](https://nekoaineko.gumroad.com/l/qlmozf?utm_source=github&utm_medium=readme&utm_campaign=audit_tool)** | Position as a partner, price the outcome, close before you name a number |
-| **[Sell AI Systems, Not Prompts — $39](https://nekoaineko.gumroad.com/l/vzmtn?utm_source=github&utm_medium=readme&utm_campaign=audit_tool)** | Turn the audit into a retainer engagement |
 
 ## How it works
 
